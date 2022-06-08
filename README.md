@@ -3,6 +3,8 @@
 ```
 python 3.6.5
 MySQL >= 5.6
+
+pip install -r requirement.txt
 ```
 
 ## 运行前需要修改的项
