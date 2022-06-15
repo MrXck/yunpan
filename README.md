@@ -3,6 +3,8 @@
 ```
 python 3.6.5
 MySQL >= 5.6
+
+pip install -r requirements.txt
 ```
 
 ## 运行前需要修改的项
@@ -41,4 +43,3 @@ python manage.py migrate
 ```
 python manage.py runserver 127.0.0.1:8000
 ```
-

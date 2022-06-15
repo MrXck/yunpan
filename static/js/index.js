@@ -55,10 +55,6 @@ function scan_dir(item) {
 }
 
 
-let scrollTop = 0;
-$(window).scroll(function (){
-    scrollTop = $(window).scrollTop()
-})
 let mouseDown = false;
 (function () {
     let main = $('.main')
@@ -77,7 +73,7 @@ let mouseDown = false;
         var startX = (evt.x || evt.clientX);
         var startY = (evt.y || evt.clientY);
         var selDiv = document.createElement("div");
-        selDiv.style.cssText = "position:fixed;width:0px;height:0px;font-size:0px;margin:0px;padding:0px;border:1px solid #0099FF;background-color:#C3D5ED;z-index:1000;filter:alpha(opacity:60);opacity:0.6;display:none;";
+        selDiv.style.cssText = "position:absolute;width:0px;height:0px;font-size:0px;margin:0px;padding:0px;border:1px solid #0099FF;background-color:#C3D5ED;z-index:1000;filter:alpha(opacity:60);opacity:0.6;display:none;";
         selDiv.id = "selectDiv";
         document.body.appendChild(selDiv);
         selDiv.style.left = startX + "px";
@@ -89,7 +85,7 @@ let mouseDown = false;
             if (mouseDown) {
                 evt = window.event || arguments[0];
                 if (isSelect) {
-                    if (selDiv.style.display == "none") {
+                    if (selDiv.style.display === "none") {
                         selDiv.style.display = "";
                     }
                     _x = (evt.x || evt.clientX);
@@ -99,18 +95,27 @@ let mouseDown = false;
                     selDiv.style.width = Math.abs(_x - startX) + "px";
                     selDiv.style.height = Math.abs(_y - startY) + "px";
                     // ---------------- 关键算法 ---------------------
-                    var _l = selDiv.offsetLeft - parseInt($('.sidebar-sticky').css('width').replace('px', '')),
-                        _t = selDiv.offsetTop + scrollTop - parseInt($('.navbar-dark').css('height').replace('px', ''));
-                    var _w = selDiv.offsetWidth, _h = selDiv.offsetHeight;
-                    for (var i = 0; i < selList.length; i++) {
-                        var sl = selList[i].offsetWidth + selList[i].offsetLeft;
-                        var st = selList[i].offsetHeight + selList[i].offsetTop;
-                        if (sl > _l && st > _t && selList[i].offsetLeft < _l + _w && selList[i].offsetTop < _t + _h) {
-                            if (selList[i].className.indexOf("seled") == -1) {
+                    let selDivRect = selDiv.getBoundingClientRect();
+                    const left1 = selDivRect.left;
+                    const right1 = selDivRect.left + selDivRect.width;
+                    const top1 = selDivRect.top;
+                    const bottom1 = selDivRect.top + selDivRect.height;
+                    const width1 = selDivRect.width;
+                    const height1 = selDivRect.height;
+                    for (let i = 0; i < selList.length; i++) {
+                        const itemRect = selList[i].getBoundingClientRect()
+                        const left2 = itemRect.left;
+                        const right2 = itemRect.left + itemRect.width;
+                        const top2 = itemRect.top;
+                        const bottom2 = itemRect.top + itemRect.height;
+                        const width2 = itemRect.width;
+                        const height2 = itemRect.height;
+                        if (!(left2 > right1 || left1 > right2 || bottom1 < top2 || bottom2 < top1 || width1 <= 0 || width2 <= 0 || height1 <= 0 || height2 <= 0)) {
+                            if (selList[i].className.indexOf("seled") === -1) {
                                 selList[i].className = selList[i].className + " seled";
                             }
                         } else {
-                            if (selList[i].className.indexOf("seled") != -1) {
+                            if (selList[i].className.indexOf("seled") !== -1) {
                                 selList[i].className = "item";
                             }
                         }
@@ -146,7 +151,7 @@ function showSelDiv(arr) {
     vm.dragMoveList = []
     vm.operationList = []
     for (var i = 0; i < arr.length; i++) {
-        if (arr[i].className.indexOf("seled") != -1) {
+        if (arr[i].className.indexOf("seled") !== -1) {
             vm.dragMoveList.push($(arr[i]).find('input').val())
             vm.operationList.push($(arr[i]).find('input').val())
         }
@@ -155,11 +160,10 @@ function showSelDiv(arr) {
 
 
 document.body.addEventListener('keyup', (e)=>{
-    if (e.key == 'Delete'){
+    if (e.key === 'Delete'){
         vm.deleteModal = true
     }
 })
-
 
 
 $(function (){
