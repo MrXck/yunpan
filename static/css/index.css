@@ -28,6 +28,8 @@ body {
     flex-wrap: wrap;
     padding: 10px;
     align-content: flex-start;
+    overflow: auto;
+    position: relative;
 }
 
 .item {

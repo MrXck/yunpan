@@ -54,7 +54,6 @@ function scan_dir(item) {
     })
 }
 
-
 let mouseDown = false;
 (function () {
     let main = $('.main')
@@ -72,15 +71,15 @@ let mouseDown = false;
         var evt = window.event || arguments[0];
         var startX = (evt.x || evt.clientX);
         var startY = (evt.y || evt.clientY);
-        var selDiv = document.createElement("div");
-        selDiv.style.cssText = "position:absolute;width:0px;height:0px;font-size:0px;margin:0px;padding:0px;border:1px solid #0099FF;background-color:#C3D5ED;z-index:1000;filter:alpha(opacity:60);opacity:0.6;display:none;";
+        var selDiv = $('#selectDiv')[0];
         selDiv.id = "selectDiv";
-        document.body.appendChild(selDiv);
+        $('.main').append(selDiv);
         selDiv.style.left = startX + "px";
         selDiv.style.top = startY + "px";
         var _x = null;
         var _y = null;
         clearEventBubble(evt);
+        let startPoint = getRelativePositionInElement(evt.clientX, evt.clientY)
         document.onmousemove = function () {
             if (mouseDown) {
                 evt = window.event || arguments[0];
@@ -90,10 +89,12 @@ let mouseDown = false;
                     }
                     _x = (evt.x || evt.clientX);
                     _y = (evt.y || evt.clientY);
-                    selDiv.style.left = Math.min(_x, startX) + "px";
-                    selDiv.style.top = Math.min(_y, startY) + "px";
-                    selDiv.style.width = Math.abs(_x - startX) + "px";
-                    selDiv.style.height = Math.abs(_y - startY) + "px";
+                    let endPoint = getRelativePositionInElement(evt.clientX, evt.clientY)
+                    selDiv.style.left = Math.min(startPoint.x, endPoint.x) + "px";
+                    selDiv.style.top = Math.min(startPoint.y, endPoint.y) + "px";
+                    selDiv.style.width = Math.abs(startPoint.x - endPoint.x) + "px";
+                    selDiv.style.height = Math.abs(startPoint.y - endPoint.y) + "px";
+                    scrollOnDrag(evt.clientX, evt.clientY)
                     // ---------------- 关键算法 ---------------------
                     let selDivRect = selDiv.getBoundingClientRect();
                     const left1 = selDivRect.left;
@@ -128,7 +129,7 @@ let mouseDown = false;
             mouseDown = false
             isSelect = false;
             if (selDiv) {
-                document.body.removeChild(selDiv);
+                selDiv.style.display = 'none'
                 showSelDiv(selList);
             }
             selList = null, _x = null, _y = null, selDiv = null, startX = null, startY = null, evt = null;
@@ -158,6 +159,53 @@ function showSelDiv(arr) {
     }
 }
 
+getRelativePositionInElement = (clientX, clientY) => {
+    const rect = $('.main')[0].getBoundingClientRect();
+    const { left, top } = rect;
+    const { scrollLeft, scrollTop, scrollWidth, scrollHeight } = $('.main')[0];
+    let x = clientX - left + scrollLeft;
+    let y = clientY - top + scrollTop;
+    if (x < 0) {
+      x = 0;
+    } else if (x > scrollWidth) {
+      x = scrollWidth;
+    }
+
+    if (y < 0) {
+      y = 0;
+    } else if (y > scrollHeight) {
+      y = scrollHeight;
+    }
+
+    return { x: Math.round(x), y: Math.round(y) };
+}
+
+scrollOnDrag = (mouseX, mouseY) => {
+    const { x, y, width, height } = $('.main')[0].getBoundingClientRect();
+
+    let scrollX, scrollY;
+
+    if (mouseX < x) {
+      scrollX = mouseX - x;
+    } else if (mouseX > (x + width)) {
+      scrollX = mouseX - (x + width);
+    }
+
+    if (mouseY < y) {
+      scrollY = mouseY - y;
+    } else if (mouseY > (y + height)) {
+      scrollY = mouseY - (y + height);
+    }
+
+    if (scrollX || scrollY) {
+      $('.main')[0].scrollBy({
+        left: scrollX,
+          top: scrollY,
+          behavior: 'auto'
+      });
+    }
+}
+
 
 document.body.addEventListener('keyup', (e)=>{
     if (e.key === 'Delete'){
@@ -167,10 +215,10 @@ document.body.addEventListener('keyup', (e)=>{
 
 
 $(function (){
-    $('.main').css('min-height', document.documentElement.clientHeight - parseInt($('.navbar-dark').css('height').replace('px', '')) - 50 - 36)
+    $('.main').css('height', document.documentElement.clientHeight - parseInt($('.navbar-dark').css('height').replace('px', '')) - 50 - 36)
 })
 window.onresize = () => {
     return (() => {
-        $('.main').css('min-height', document.documentElement.clientHeight - parseInt($('.navbar-dark').css('height').replace('px', '')) - 50 - 36)
+        $('.main').css('height', document.documentElement.clientHeight - parseInt($('.navbar-dark').css('height').replace('px', '')) - 50 - 36)
     })()
 }
