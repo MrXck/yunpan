@@ -239,7 +239,7 @@
                          @mouseleave="dragMoveList.splice(dragMoveList.indexOf(item.id), 99)"
                          @mouseover="dragMoveList.push(item.id)" @drop.stop="dragMove(item)" draggable="true"
                          v-for="item in fileList" :key="item.id" class="item" @click="getFileList(item)">
-                        <input class="checkbox" type="checkbox" @click.stop v-model="operationList" :value="item.id">
+                        <input class="checkbox" type="checkbox" @click.stop="appendOrRemoveClass" v-model="operationList" :value="item.id">
                         <img ondragstart="return false" class="file" v-if="item.filetype == 0"
                              src="{% static '/img/文件.png' %}" alt="">
                         <img ondragstart="return false" class="dir" v-if="item.filetype == 1"
@@ -768,6 +768,9 @@
                     result.push(charValue);
                 }
                 return result.join("");
+            },
+            appendOrRemoveClass(event){
+                $(event.target).parent().toggleClass('seled')
             }
         },
         created() {
