@@ -10,6 +10,6 @@ def is_repetition(obj, user_id):
     else:
         split_str = obj.filename.rsplit(".", 1)
         obj.filename = f'{split_str[0]}(1).{split_str[1]}'
-    file_obj = models.File.objects.filter(user_id=user_id, filename=obj.filename, parent_id=obj.parent_id).first()
+    file_obj = models.File.objects.filter(user_id=user_id, filename=obj.filename, parent_id=obj.parent_id, is_delete=0).first()
     if file_obj:
         is_repetition(obj, user_id)

@@ -104,7 +104,7 @@ def upload(request):
     for i in request.FILES:
         suffix = '.' + i.split('.')[-1]
         path = os.path.join(dir_path, HASH + suffix)
-        if models.File.objects.filter(filename=i, parent_id=parent_id, filetype=0, user_id=user_id):
+        if models.File.objects.filter(filename=i, parent_id=parent_id, filetype=0, user_id=user_id, is_delete=0):
             return JsonResponse({'code': 1, 'message': settings.UPLOAD_ERROR})
         models.File(
             filename=i,

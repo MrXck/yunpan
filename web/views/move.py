@@ -14,7 +14,7 @@ def move(request):
     parent_id = dic.get('parent_id')
     if parent_id == 0:
         parent_id = None
-    file_list = models.File.objects.filter(~Q(id=parent_id), user_id=user_id, pk__in=dic.get('operationList'))
+    file_list = models.File.objects.filter(~Q(id=parent_id), user_id=user_id, pk__in=dic.get('operationList'), is_delete=0)
     parent_obj = models.File.objects.filter(pk=parent_id).first()
     for i in file_list:
         if i.parent is None and parent_obj:
@@ -41,7 +41,7 @@ def drag_move(request):
         operationList = operationList
     if parent_id in operationList:
         return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})
-    models.File.objects.filter(pk__in=operationList, user_id=user_id).update(parent_id=parent_id)
+    models.File.objects.filter(pk__in=operationList, user_id=user_id, is_delete=0).update(parent_id=parent_id)
     return JsonResponse({'code': 0, 'message': settings.MOVE_SUCCESS})
 
 
@@ -51,12 +51,12 @@ def dirlist(request):
     data = json.loads(request.body.decode('utf-8'))
     parent_id = data['parent_id']
     if parent_id == 0:
-        file_list = models.File.objects.filter(user_id=user_id, parent__isnull=True, filetype=1, status=1)
+        file_list = models.File.objects.filter(user_id=user_id, parent__isnull=True, filetype=1, status=1, is_delete=0)
     else:
         file_obj = models.File.objects.get(pk=parent_id)
         bread.insert(0, [file_obj.id, file_obj.filename])
         while file_obj.parent is not None:
             bread.insert(0, [file_obj.parent.id, file_obj.parent.filename])
             file_obj = file_obj.parent
-        file_list = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=1, status=1)
+        file_list = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=1, status=1, is_delete=0)
     return JsonResponse({'code': 0, 'data': list(file_list.values()), 'bread': list(bread)})

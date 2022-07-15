@@ -59,13 +59,13 @@ def share_files(request, share_id):
         share_obj = models.Share.objects.filter(pk=share_id).first()
         file_list = share_obj.files.all()
     else:
-        file_obj = models.File.objects.get(pk=file_id)
+        file_obj = models.File.objects.get(pk=file_id, is_delete=0)
         if file_obj is not None:
             bread.insert(0, [file_obj.id, file_obj.filename])
             while file_obj.parent is not None:
                 bread.insert(0, [file_obj.parent.id, file_obj.parent.filename])
                 file_obj = file_obj.parent
-        file_list = models.File.objects.filter(parent_id=file_id).order_by('-filetype')
+        file_list = models.File.objects.filter(parent_id=file_id, is_delete=0).order_by('-filetype')
     return JsonResponse({'code': 0, 'data': list(file_list.values()), 'bread': list(bread)})
 
 
@@ -75,7 +75,7 @@ def get_share_files(request):
     parent_id = dic.get('parent_id')
     if parent_id == 0:
         parent_id = None
-    file_list = models.File.objects.filter(pk__in=dic.get('operationList'))
+    file_list = models.File.objects.filter(pk__in=dic.get('operationList'), is_delete=0)
     li = []
     for file_obj in file_list:
         obj = models.File(
@@ -88,7 +88,7 @@ def get_share_files(request):
             parent_id=parent_id,
             user_id=user_id,
         )
-        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=obj.parent_id, filename=obj.filename)
+        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=obj.parent_id, filename=obj.filename, is_delete=0)
         if file_obj_list:
             is_repetition(obj, user_id)
         li.append(obj)

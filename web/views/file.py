@@ -1,7 +1,6 @@
 import os
 import zipfile
 import json
-import re
 
 from utils.download import download_file, dabao
 
@@ -19,7 +18,7 @@ def file(request):
     file_id = data['file_id']
     status = data['status']
     if file_id == 0:
-        file_list = models.File.objects.filter(user_id=user_id, parent__isnull=True, status=status).order_by('-filetype')
+        file_list = models.File.objects.filter(user_id=user_id, parent__isnull=True, status=status, is_delete=0).order_by('-filetype')
     else:
         file_obj = models.File.objects.get(pk=file_id)
         if file_obj is not None:
@@ -27,7 +26,7 @@ def file(request):
             while file_obj.parent is not None:
                 bread.insert(0, [file_obj.parent.id, file_obj.parent.filename])
                 file_obj = file_obj.parent
-        file_list = models.File.objects.filter(user_id=user_id, parent_id=file_id, status=status).order_by('-filetype')
+        file_list = models.File.objects.filter(user_id=user_id, parent_id=file_id, status=status, is_delete=0).order_by('-filetype')
     return JsonResponse({'code': 0, 'data': list(file_list.values()), 'bread': list(bread)})
 
 
@@ -69,7 +68,7 @@ def delete(request):
     if len(operation_list) < 1:
         return JsonResponse({'code': 1, 'message': settings.DELETE_ERROR})
     try:
-        file_obj_list = models.File.objects.filter(user_id=user_id, pk__in=operation_list)
+        file_obj_list = models.File.objects.filter(user_id=user_id, pk__in=operation_list, is_delete=0)
         for i in file_obj_list:
             delete_child(i, user_id)
     except ValueError:
@@ -81,7 +80,7 @@ def search(request):
     user_id = request.session['user']
     data = json.loads(request.body.decode('utf-8'))
     query = data['query']
-    file_list = models.File.objects.filter(user_id=user_id, status=1, filename__contains=query).order_by('-filetype')
+    file_list = models.File.objects.filter(user_id=user_id, status=1, filename__contains=query, is_delete=0).order_by('-filetype')
     return JsonResponse({'code': 0, 'data': list(file_list.values())})
 
 
@@ -94,15 +93,15 @@ def rename(request):
         return JsonResponse({'code': 1, 'message': settings.RENAME_ERROR})
     if parent_id == '0':
         parent_id = None
-    dir_obj = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=1)
-    file_obj = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=0)
+    dir_obj = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=1, status=1, is_delete=0)
+    file_obj = models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=0, status=1, is_delete=0)
     flag = True
     for obj in file_obj:
         if rename == obj.filename:
             flag = False
             break
     if flag:
-        models.File.objects.filter(pk__in=operationList, filetype=0, user_id=user_id, parent_id=parent_id).update(filename=rename)
+        models.File.objects.filter(pk__in=operationList, filetype=0, user_id=user_id, parent_id=parent_id, status=1, is_delete=0).update(filename=rename)
     else:
         return JsonResponse({'code': 1, 'message': settings.RENAME_FILE_ERROR})
     flag = True
@@ -111,7 +110,7 @@ def rename(request):
             flag = False
             break
     if flag:
-        models.File.objects.filter(pk__in=operationList, filetype=1, user_id=user_id, parent_id=parent_id).update(filename=rename)
+        models.File.objects.filter(pk__in=operationList, filetype=1, user_id=user_id, parent_id=parent_id, status=1, is_delete=0).update(filename=rename)
     else:
         return JsonResponse({'code': 1, 'message': settings.RENAME_DIR_ERROR})
     return JsonResponse({'code': 0, 'message': settings.RENAME_SUCCESS})
@@ -119,11 +118,13 @@ def rename(request):
 
 def delete_child(file_obj, user_id):
     if file_obj.filetype == 1:
-        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=file_obj.id)
+        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=file_obj.id, is_delete=0)
         if file_obj.status == 0:
             for i in file_obj_list:
                 delete_child(i, user_id)
-            file_obj.delete()
+            # file_obj.delete()  # 修改成逻辑删除
+            file_obj.is_delete = 1
+            file_obj.save()
         else:
             file_obj.status = 0
             file_obj.save()
@@ -132,7 +133,9 @@ def delete_child(file_obj, user_id):
     else:
         if file_obj.status == 0:
             # os.remove(file_obj.filepath.replace('\u202a', ''))  # 要支持分享就不能真删
-            file_obj.delete()
+            # file_obj.delete()  # 修改成逻辑删除
+            file_obj.is_delete = 1
+            file_obj.save()
         else:
             file_obj.status = 0
             file_obj.save()
@@ -143,19 +146,19 @@ def restore_files(request):
     file_list = request.GET.get('operationList').split(',')
     if not file_list:
         return JsonResponse({'code': 1, 'message': settings.RESTORE_ERROR})
-    file_obj_list = models.File.objects.filter(user_id=user_id, pk__in=file_list, status=0)
+    file_obj_list = models.File.objects.filter(user_id=user_id, pk__in=file_list, status=0, is_delete=0)
     restore_child(file_obj_list, user_id)
     return JsonResponse({'code': 0, 'message': settings.RESTORE_SUCCESS})
 
 
 def restore_child(li, user_id):
     for obj in li:
-        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=obj.parent_id, filename=obj.filename)
+        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=obj.parent_id, filename=obj.filename, is_delete=0)
         if file_obj_list:
             is_repetition(obj, user_id)
         obj.status = 1
         obj.save()
-        file_list = models.File.objects.filter(user_id=user_id, parent_id=obj.id, status=0)
+        file_list = models.File.objects.filter(user_id=user_id, parent_id=obj.id, status=0, is_delete=0)
         if file_list:
             restore_child(file_list, user_id)
 

@@ -14,9 +14,10 @@ class File(models.Model):
     filetype = models.IntegerField(choices=((1, '文件夹'), (0, '文件')), null=False)
     filepath = models.CharField(max_length=256, null=False)
     file_hash = models.CharField(max_length=256, null=False)
-    status = models.IntegerField(choices=((1, '正常'), (0, '已删除')))
+    status = models.IntegerField(choices=((1, '正常'), (0, '放入回收站')))
     parent = models.ForeignKey(to='File', on_delete=models.CASCADE, null=True, default=None)
     create_time = models.DateTimeField(auto_now_add=True)
+    is_delete = models.IntegerField(choices=((1, '逻辑删除'), (0, '未删除')), default=0)
     user = models.ForeignKey(to='User', on_delete=models.CASCADE)
 
 
