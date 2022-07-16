@@ -2,6 +2,8 @@ import os
 import zipfile
 import json
 
+from django.db.models import Q
+
 from utils.download import download_file, dabao
 
 from django.conf import settings
@@ -45,7 +47,7 @@ def create(request):
     dir_name = data['dir_name']
     if file_id == 0:
         file_id = None
-    dir_obj = models.File.objects.filter(parent_id=file_id, user_id=user_id, filename=dir_name, filetype=1, status=1)
+    dir_obj = models.File.objects.filter(parent_id=file_id, user_id=user_id, filename=dir_name, filetype=1, status=1, is_delete=0)
     if dir_obj:
         return JsonResponse({'code': 1, 'message': settings.CREATE_ERROR})
     models.File(
@@ -101,16 +103,21 @@ def rename(request):
             flag = False
             break
     if flag:
-        models.File.objects.filter(pk__in=operationList, filetype=0, user_id=user_id, parent_id=parent_id, status=1, is_delete=0).update(filename=rename)
+        li = models.File.objects.filter(pk__in=operationList, filetype=0, user_id=user_id, parent_id=parent_id, status=1, is_delete=0)
+        if len(li) > 0:
+            li.update(filename=rename)
+            return JsonResponse({'code': 0, 'message': settings.RENAME_SUCCESS})
     else:
         return JsonResponse({'code': 1, 'message': settings.RENAME_FILE_ERROR})
-    flag = True
     for obj in dir_obj:
         if rename == obj.filename:
             flag = False
             break
     if flag:
-        models.File.objects.filter(pk__in=operationList, filetype=1, user_id=user_id, parent_id=parent_id, status=1, is_delete=0).update(filename=rename)
+        li = models.File.objects.filter(pk__in=operationList, filetype=1, user_id=user_id, parent_id=parent_id, status=1, is_delete=0)
+        if len(li) > 0:
+            li.update(filename=rename)
+            return JsonResponse({'code': 0, 'message': settings.RENAME_SUCCESS})
     else:
         return JsonResponse({'code': 1, 'message': settings.RENAME_DIR_ERROR})
     return JsonResponse({'code': 0, 'message': settings.RENAME_SUCCESS})
@@ -120,25 +127,21 @@ def delete_child(file_obj, user_id):
     if file_obj.filetype == 1:
         file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=file_obj.id, is_delete=0)
         if file_obj.status == 0:
-            for i in file_obj_list:
-                delete_child(i, user_id)
             # file_obj.delete()  # 修改成逻辑删除
             file_obj.is_delete = 1
-            file_obj.save()
         else:
             file_obj.status = 0
-            file_obj.save()
-            for i in file_obj_list:
-                delete_child(i, user_id)
+        file_obj.save()
+        for i in file_obj_list:
+            delete_child(i, user_id)
     else:
         if file_obj.status == 0:
             # os.remove(file_obj.filepath.replace('\u202a', ''))  # 要支持分享就不能真删
             # file_obj.delete()  # 修改成逻辑删除
             file_obj.is_delete = 1
-            file_obj.save()
         else:
             file_obj.status = 0
-            file_obj.save()
+        file_obj.save()
 
 
 def restore_files(request):
@@ -153,7 +156,7 @@ def restore_files(request):
 
 def restore_child(li, user_id):
     for obj in li:
-        file_obj_list = models.File.objects.filter(user_id=user_id, parent_id=obj.parent_id, filename=obj.filename, is_delete=0)
+        file_obj_list = models.File.objects.filter(~Q(pk=obj.id), user_id=user_id, parent_id=obj.parent_id, filename=obj.filename, is_delete=0)
         if file_obj_list:
             is_repetition(obj, user_id)
         obj.status = 1

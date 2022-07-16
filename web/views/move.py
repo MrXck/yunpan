@@ -15,12 +15,13 @@ def move(request):
     if parent_id == 0:
         parent_id = None
     file_list = models.File.objects.filter(~Q(id=parent_id), user_id=user_id, pk__in=dic.get('operationList'), is_delete=0)
-    parent_obj = models.File.objects.filter(pk=parent_id).first()
+    parent_obj = models.File.objects.filter(pk=parent_id, is_delete=0).first()
     for i in file_list:
         if i.parent is None and parent_obj:
             while parent_obj.parent is not None:
                 if parent_obj.parent_id == i.id:
                     return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})
+                parent_obj = parent_obj.parent
         while i.parent is not None:
             if i.parent_id == parent_id:
                 return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})

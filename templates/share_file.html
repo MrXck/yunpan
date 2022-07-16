@@ -16,7 +16,7 @@
     <link href="{% static '/css/share.css' %}" rel="stylesheet">
 </head>
 <body>
-<div id="app">
+<div id="app" style="display: none;" :style="{display: 'block'}">
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">云盘</a>
         <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse"
@@ -103,7 +103,7 @@
                 </div>
                 <div class="main">
                     <div v-for="item in fileList" :key="item.id" class="item" @click="getFileList(item)">
-                        <input class="checkbox" type="checkbox" @click.stop v-model="operationList" :value="item.id">
+                        <input class="checkbox" type="checkbox" @click.stop="appendOrRemoveClass" v-model="operationList" :value="item.id">
                         <img class="file" v-if="item.filetype == 0" src="{% static '/img/文件.png' %}" alt="">
                         <img class="dir" v-if="item.filetype == 1" src="{% static '/img/dir.png' %}" alt="">
                         <p class="filename" v-text="filterStr(item.filename)"></p>
@@ -180,7 +180,11 @@
                     operationList: this.operationList,
                     parent_id: this.parent_id
                 }).then((res) => {
-                    console.log(res.data)
+                    if(res.data.code === 0){
+                        this.$message.success(res.data.message)
+                    }else {
+                        this.$message.error(res.data.message)
+                    }
                 }).finally(() => {
                     this.init()
                     this.moveModal = false
@@ -204,6 +208,9 @@
                 this.status = 1
                 this.init()
             },
+            appendOrRemoveClass(event){
+                $(event.target).parent().toggleClass('seled')
+            }
         },
         created() {
             this.init()

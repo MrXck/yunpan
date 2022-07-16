@@ -155,3 +155,5 @@ MOVE_ERROR = '移动失败'
 
 SHARE_ERROR = '分享失败'
 SHARE_PASSWORD_ERROR = '密码错误'
+
+SAVE_SUCCESS = '保存成功'

@@ -21,7 +21,7 @@ def upload_merge(request):
     file_path = os.path.join(dir_path, uuid_name + '.' + file_name.split('.')[-1])
     file_list = os.listdir(file_hash_path)
     count = int(request.GET.get('count'))
-    suffix = '.' + file_list[0].split('.')[1]
+    suffix = '.' + file_list[0].split('.')[-1]
     with open(file_path, 'wb') as f:
         for i in range(1, count + 1):
             merge_filename = f'{file_hash_name}_{i}{suffix}'
@@ -51,7 +51,7 @@ def upload_already(request):
     user_id = request.session['user']
     if parent_id == '0':
         parent_id = None
-    if models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=0, filename=filename, status=1):
+    if models.File.objects.filter(user_id=user_id, parent_id=parent_id, filetype=0, filename=filename, status=1, is_delete=0):
         return JsonResponse({'code': 1, 'message': settings.UPLOAD_ERROR})
     file_obj_list = models.File.objects.filter(filetype=0, file_hash=file_hash)
     if file_obj_list:

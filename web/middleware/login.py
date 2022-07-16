@@ -8,7 +8,6 @@ class Login(MiddlewareMixin):
     def process_request(self, request):
         path = ['/login', '/register']
         if request.path.startswith('/static'):
-            print(213321)
             return None
         if request.session.get('user'):
             return None

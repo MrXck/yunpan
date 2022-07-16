@@ -36,7 +36,6 @@ def get_share(request, share_id):
     session_share_id = request.session.get('share_id')
     if str(session_share_id) == str(share_id):
         return JsonResponse({'code': 0, 'url': url})
-    share_obj = models.Share.objects.filter(pk=share_id).first()
     dic = json.loads(request.body.decode('utf-8'))
     password = dic.get('password')
     if password == share_obj.password:
@@ -93,4 +92,4 @@ def get_share_files(request):
             is_repetition(obj, user_id)
         li.append(obj)
     models.File.objects.bulk_create(li, batch_size=200)
-    return JsonResponse({'code': 0})
+    return JsonResponse({'code': 0, 'message': settings.SAVE_SUCCESS})

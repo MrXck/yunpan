@@ -40,13 +40,13 @@
                 <div class="sidebar-sticky pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item" @click="file">
-                            <a :class="tab==1?'nav-link active':'nav-link'" href="#" @click="tab=1">
+                            <a :class="tab==1?'nav-link active':'nav-link'" href="#" @click="()=>{tab=1; file_id=0}">
                                 <span data-feather="home"></span>
                                 文件 <span class="sr-only">(current)</span>
                             </a>
                         </li>
                         <li class="nav-item" @click="trash">
-                            <a :class="tab==2?'nav-link active':'nav-link'" href="#" @click="tab=2">
+                            <a :class="tab==2?'nav-link active':'nav-link'" href="#" @click="()=>{tab=2; file_id=0}">
                                 <span data-feather="home"></span>
                                 回收站 <span class="sr-only">(current)</span>
                             </a>
@@ -377,7 +377,7 @@
                     return
                 }
                 this.moveModal = true
-                axios.post("{% url 'dirlist' %}", {file_id: this.file_id, parent_id: this.parent_id}).then((res) => {
+                axios.post("{% url 'dirlist' %}", {parent_id: this.parent_id}).then((res) => {
                     if (res.data.code === 0) {
                         this.dirMoveList = res.data.data
                         this.dirBreadList = res.data.bread
@@ -757,17 +757,6 @@
             },
             mousedown() {
                 return false;
-            },
-            binaryToStr(str) {
-                var result = [];
-                var list = str.split(" ");
-                for (var i = 0; i < list.length; i++) {
-                    var item = list[i];
-                    var asciiCode = parseInt(item, 2);
-                    var charValue = String.fromCharCode(asciiCode);
-                    result.push(charValue);
-                }
-                return result.join("");
             },
             appendOrRemoveClass(event){
                 $(event.target).parent().toggleClass('seled')
