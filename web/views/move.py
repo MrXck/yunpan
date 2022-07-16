@@ -15,8 +15,12 @@ def move(request):
     if parent_id == 0:
         parent_id = None
     file_list = models.File.objects.filter(~Q(id=parent_id), user_id=user_id, pk__in=dic.get('operationList'), is_delete=0)
-    parent_obj = models.File.objects.filter(pk=parent_id, is_delete=0).first()
+    parent_obj = models.File.objects.filter(pk=parent_id, is_delete=0, user_id=user_id).first()
+    obj_list = models.File.objects.filter(parent_id=parent_id, is_delete=0, user_id=user_id)
     for i in file_list:
+        for j in obj_list:
+            if j.filename == i.filename and j.filetype == i.filetype:
+                return JsonResponse({'code': 1, 'message': settings.MOVE_FILE_ERROR})
         if i.parent is None and parent_obj:
             while parent_obj.parent is not None:
                 if parent_obj.parent_id == i.id:
@@ -40,9 +44,27 @@ def drag_move(request):
         operationList = operationList[0].split(',')
     except:
         operationList = operationList
+    if parent_id == 0:
+        parent_id = None
     if parent_id in operationList:
         return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})
-    models.File.objects.filter(pk__in=operationList, user_id=user_id, is_delete=0).update(parent_id=parent_id)
+    file_list = models.File.objects.filter(~Q(id=parent_id), pk__in=operationList, user_id=user_id, is_delete=0)
+    obj_list = models.File.objects.filter(parent_id=parent_id, is_delete=0, user_id=user_id)
+    parent_obj = models.File.objects.filter(pk=parent_id, is_delete=0, user_id=user_id).first()
+    for i in file_list:
+        for j in obj_list:
+            if j.filename == i.filename and j.filetype == i.filetype:
+                return JsonResponse({'code': 1, 'message': settings.MOVE_FILE_ERROR})
+        if i.parent is None and parent_obj:
+            while parent_obj.parent is not None:
+                if parent_obj.parent_id == i.id:
+                    return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})
+                parent_obj = parent_obj.parent
+        while i.parent is not None:
+            if i.parent_id == parent_id:
+                return JsonResponse({'code': 1, 'message': settings.MOVE_TO_SELF_ERROR})
+            i = i.parent
+    file_list.update(parent_id=parent_id)
     return JsonResponse({'code': 0, 'message': settings.MOVE_SUCCESS})
 
 

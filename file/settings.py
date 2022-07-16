@@ -152,6 +152,7 @@ RESTORE_ERROR = '恢复失败'
 MOVE_SUCCESS = '移动成功'
 MOVE_TO_SELF_ERROR = '不可以移动到自己里面'
 MOVE_ERROR = '移动失败'
+MOVE_FILE_ERROR = '该文件夹下存在相同名'
 
 SHARE_ERROR = '分享失败'
 SHARE_PASSWORD_ERROR = '密码错误'
